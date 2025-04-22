@@ -26,24 +26,23 @@ def list_postgres_databases(host, database_name, port, user, password):
 
 def write_to_drive(path, filename):
     json_secret = json.loads(os.environ.get('GOOGLE_JSON_KEY'))
-    # google_drive_folder_id = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
-    google_drive_folder_id = ''
+    backups_folder_id = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
+    # google_drive_folder_id = ''
 
     scope = ["https://www.googleapis.com/auth/drive"]
 
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(keyfile_dict=json_secret, scopes=scope)
-    print(credentials)
 
     # setup the google drive stance and sign in
     drive = build('drive', 'v3', credentials=credentials)
 
-    backups_folder_id = drive.files().list(
-        # corpora="drive",
-        # driveId=google_drive_folder_id,
-        includeItemsFromAllDrives=True,
-        supportsAllDrives=True,
-        q="name='UNC-NCSU SunnyD Backups' and mimeType='application/vnd.google-apps.folder'"
-    ).execute().get('files')[0].get('id')
+    # backups_folder_id = drive.files().list(
+    #     # corpora="drive",
+    #     # driveId=google_drive_folder_id,
+    #     includeItemsFromAllDrives=True,
+    #     supportsAllDrives=True,
+    #     q="name='UNC-NCSU SunnyD Backups' and mimeType='application/vnd.google-apps.folder'"
+    # ).execute().get('files')[0].get('id')
 
     file_metadata = {
             'name': [filename],
