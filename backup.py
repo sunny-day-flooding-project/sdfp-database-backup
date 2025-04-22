@@ -42,7 +42,7 @@ def write_to_drive(path, filename):
         # driveId=google_drive_folder_id,
         includeItemsFromAllDrives=True,
         supportsAllDrives=True,
-        q="name='Backups' and mimeType='application/vnd.google-apps.folder'"
+        q="name='UNC-NCSU SunnyD Backups' and mimeType='application/vnd.google-apps.folder'"
     ).execute().get('files')[0].get('id')
 
     file_metadata = {
