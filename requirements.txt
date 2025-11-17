@@ -8,5 +8,5 @@ requests==2.27.1; python_version >= "3.6" and python_full_version < "3.0.0" or p
 requests-oauthlib==1.3.1; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 oauth2client==4.1.3
 oauthlib==3.2.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
-psycopg2==2.9.3
+psycopg2==2.9.10
 # subprocess
