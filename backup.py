@@ -6,7 +6,18 @@ from googleapiclient.http import MediaFileUpload
 from datetime import date
 import gzip
 import subprocess
+import requests
 
+def notify_teams(message):
+    url = os.getenv("TEAMS_WEBHOOK_URL")
+    if not url:
+        return
+    payload = {"message": message}
+    try:
+        requests.post(url, json=payload, timeout=5)
+    except Exception as e:
+        print("Failed to send Teams notification:", e)
+        
 def list_postgres_databases(host, database_name, port, user, password):
     try:
         process = subprocess.Popen(
@@ -25,49 +36,52 @@ def list_postgres_databases(host, database_name, port, user, password):
         exit(1)
 
 def write_to_drive(path, filename):
-    host_os = os.getenv("HOST_OS")
-    if host_os and host_os.lower() == "windows":
-        # for local running only below
-        fp = open("/code/auth.json")  
-        json_secret = fp.read()
-        fp.close()
-        json_secret = json.loads(json_secret)
-        json_secret["private_key"] = json_secret["private_key"].replace("\\n", "\n")
-    else:
-        # The line below is for OpenShift running
-        json_secret = json.loads(os.environ.get('GOOGLE_JSON_KEY'))
-    backups_folder_id = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
-    # google_drive_folder_id = ''
+    try:
+        host_os = os.getenv("HOST_OS")
+        if host_os and host_os.lower() == "windows":
+            fp = open("/code/auth.json")
+            json_secret = fp.read()
+            fp.close()
+            json_secret = json.loads(json_secret)
+            json_secret["private_key"] = json_secret["private_key"].replace("\\n", "\n")
+        else:
+            json_secret = json.loads(os.environ.get('GOOGLE_JSON_KEY'))
 
-    scope = ["https://www.googleapis.com/auth/drive"]
+        backups_folder_id = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
 
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(keyfile_dict=json_secret, scopes=scope)
+        scope = ["https://www.googleapis.com/auth/drive"]
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(
+            keyfile_dict=json_secret,
+            scopes=scope
+        )
 
-    # setup the google drive stance and sign in
-    drive = build('drive', 'v3', credentials=credentials)
+        drive = build('drive', 'v3', credentials=credentials)
 
-    # backups_folder_id = drive.files().list(
-    #     # corpora="drive",
-    #     # driveId=google_drive_folder_id,
-    #     includeItemsFromAllDrives=True,
-    #     supportsAllDrives=True,
-    #     q="name='UNC-NCSU SunnyD Backups' and mimeType='application/vnd.google-apps.folder'"
-    # ).execute().get('files')[0].get('id')
-
-    file_metadata = {
-            'name': [filename],
+        file_metadata = {
+            'name': filename,
             'parents': [backups_folder_id]
         }
-    media = MediaFileUpload(path,
-                            mimetype='application/x-gzip-compressed',
-                            resumable=True)
 
-    print("ATTEMPTING UPLOAD")
-    file = drive.files().create(body=file_metadata,
-                                media_body=media,
-                                supportsAllDrives=True).execute()
-    print("UPLOAD SUCCESSFUL")
-    print(file)
+        media = MediaFileUpload(
+            path,
+            mimetype='application/x-gzip-compressed',
+            resumable=True
+        )
+
+        print("ATTEMPTING UPLOAD")
+        file = drive.files().create(
+            body=file_metadata,
+            media_body=media,
+            supportsAllDrives=True
+        ).execute()
+
+        print("UPLOAD SUCCESSFUL")
+        print(file)
+        return file
+
+    except Exception as e:
+        print("UPLOAD FAILED:", e)
+        raise   
 
 def backup_postgres_db(host, database_name, port, user, password, dest_file, verbose):
     """
@@ -136,4 +150,8 @@ def main():
     write_to_drive(path, filename)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        notify_teams(f"Backup FAILED: {e}")
+        raise
