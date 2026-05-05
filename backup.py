@@ -11,11 +11,20 @@ import requests
 def notify_teams(message):
     url = os.getenv("TEAMS_WEBHOOK_URL")
     if not url:
-        print
+        print("TEAMS_WEBHOOK_URL not set. Skipping Teams notification.")
         return
-    payload = {"message": message}
+    payload = {
+        "type": "AdaptiveCard",
+        "version": "1.4",
+        "body": [
+            {"type": "TextBlock", "text": "Backup FAILED", "weight": "Bolder"},
+            {"type": "TextBlock", "text": message, "wrap": True}
+        ],
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json"
+    }
     try:
         print("Sending Teams notification:", message)
+        print("Webhook URL:", url)
         requests.post(url, json=payload, timeout=5)
     except Exception as e:
         print("Failed to send Teams notification:", e)
