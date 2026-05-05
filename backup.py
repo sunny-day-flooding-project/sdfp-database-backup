@@ -11,9 +11,11 @@ import requests
 def notify_teams(message):
     url = os.getenv("TEAMS_WEBHOOK_URL")
     if not url:
+        print
         return
     payload = {"message": message}
     try:
+        print("Sending Teams notification:", message)
         requests.post(url, json=payload, timeout=5)
     except Exception as e:
         print("Failed to send Teams notification:", e)
