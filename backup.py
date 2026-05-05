@@ -1,3 +1,4 @@
+from email.mime import message
 import os
 import json
 from oauth2client.service_account import ServiceAccountCredentials
@@ -13,15 +14,7 @@ def notify_teams(message):
     if not url:
         print("TEAMS_WEBHOOK_URL not set. Skipping Teams notification.")
         return
-    payload = {
-        "type": "AdaptiveCard",
-        "version": "1.4",
-        "body": [
-            {"type": "TextBlock", "text": "Backup FAILED", "weight": "Bolder"},
-            {"type": "TextBlock", "text": message, "wrap": True}
-        ],
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json"
-    }
+    payload = {"message": message}
     try:
         print("Sending Teams notification:", message)
         print("Webhook URL:", url)
@@ -164,5 +157,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        notify_teams(f"Backup FAILED: {e}")
+        notify_teams(f"Database backup FAILED: {e}")
         raise
